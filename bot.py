@@ -1,16 +1,15 @@
 import asyncio
 import os
-
 from aiogram import Bot, Dispatcher, types, Router
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-import random
-
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
 API_TOKEN = os.getenv("API_TOKEN")
+GENAI_API_KEY = os.getenv("GENAI_API_KEY")
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -27,32 +26,37 @@ keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-quotes = [
-    "Не чекай ідеального моменту. Бери момент і роби його ідеальним.",
-    "Секрет зміни — зосередитися не на боротьбі зі старим, а на створенні нового.",
-    "Ти здатен на більше, ніж думаєш.",
-    "Великі досягнення починаються з малих кроків.",
-]
 
-creative_ideas = [
-    "Намалюй картину, де головний герой — приручений дракон, що живе в сучасному місті.",
-    "Напиши вірш про перший дощ після літа.",
-    "Спробуй зробити фото з незвичайної перспективи — знизу вверх або через воду.",
-    "Придумай історію про вигадану планету.",
-]
+async def get_generated_quote():
+    client = genai.Client(api_key=GENAI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=["Мотиваційна цитата"]
+    )
+    return response.text.strip()
 
-riddles = [
-    "Що завжди попереду, але ніколи не видно?",
-    "Я маю коріння, але не можу рости. Що я?",
-    "Що не можна тримати в руках, навіть якщо це дуже хочеться?",
-]
 
-facts = [
-    "Більшість пилу у твоєму домі — це частинки шкіри твоїх домашніх тварин та людей.",
-    "Коли ми сміємося, наше тіло виробляє ендорфіни, що покращують настрій.",
-    "Картопля була першим овочем, який відправили в космос.",
-    "Найбільша зірка, яку ми знаємо, має діаметр у понад 1700 разів більший за Сонце.",
-]
+async def get_generated_creative_idea():
+    client = genai.Client(api_key=GENAI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=["Ідея для творчості"]
+    )
+    return response.text.strip()
+
+
+async def get_generated_riddle():
+    client = genai.Client(api_key=GENAI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=["Загадка"]
+    )
+    return response.text.strip()
+
+
+async def get_generated_fact():
+    client = genai.Client(api_key=GENAI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=["Цікавий факт"]
+    )
+    return response.text.strip()
 
 
 @router.message(CommandStart())
@@ -65,25 +69,25 @@ async def send_welcome(message: types.Message):
 
 @router.message(lambda message: message.text == "Мотиваційна цитата")
 async def send_quote(message: types.Message):
-    quote = random.choice(quotes)
+    quote = await get_generated_quote()
     await message.reply(quote, reply_markup=keyboard)
 
 
 @router.message(lambda message: message.text == "Ідея для творчості")
 async def send_creative_idea(message: types.Message):
-    idea = random.choice(creative_ideas)
+    idea = await get_generated_creative_idea()
     await message.reply(idea, reply_markup=keyboard)
 
 
 @router.message(lambda message: message.text == "Загадка")
 async def send_riddle(message: types.Message):
-    riddle = random.choice(riddles)
+    riddle = await get_generated_riddle()
     await message.reply(riddle, reply_markup=keyboard)
 
 
 @router.message(lambda message: message.text == "Цікаві факти")
 async def send_fact(message: types.Message):
-    fact = random.choice(facts)
+    fact = await get_generated_fact()
     await message.reply(fact, reply_markup=keyboard)
 
 
